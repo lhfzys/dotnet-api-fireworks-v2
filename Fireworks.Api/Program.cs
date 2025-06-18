@@ -9,7 +9,7 @@ builder.Services.AddApplicationServices(builder.Configuration);
 var app = builder.Build();
 app.UseHttpsRedirection();
 app.UseSwaggerDocumentation();
-
+app.UseCustomExceptionHandling();
 app.UseHttpsRedirection();
 var endpointRegistrars = Assembly.GetExecutingAssembly()
     .GetTypes()

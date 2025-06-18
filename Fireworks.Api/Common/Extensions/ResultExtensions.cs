@@ -5,49 +5,59 @@ namespace Fireworks.Api.Common.Extensions;
 
 public static class ResultExtensions
 {
-    public static IResult ToApiResult<T>(this Result<T> result)
-    {
-        var validationErrors = result.Reasons
-            .OfType<ValidationError>()
-            .GroupBy(e => e.PropertyName)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(e => e.Message).ToArray()
-            );
-
-        var response = new ApiResponse<T>
-        {
-            Success = result.IsSuccess,
-            Data = result.IsSuccess ? result.Value : default,
-            Message = result.IsSuccess
-                ? "操作成功"
-                : result.Errors.FirstOrDefault()?.Message ?? "请求失败",
-            Errors = validationErrors.Count > 0 ? validationErrors : null
-        };
-
-        return Results.Ok(response);
-    }
-
     public static IResult ToApiResult(this Result result)
     {
-        var validationErrors = result.Reasons
-            .OfType<ValidationError>()
-            .GroupBy(e => e.PropertyName)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(e => e.Message).ToArray()
-            );
-
-        var response = new ApiResponse<object>
+        if (result.IsSuccess)
         {
-            Success = result.IsSuccess,
-            Data = null,
-            Message = result.IsSuccess
-                ? "操作成功"
-                : result.Errors.FirstOrDefault()?.Message ?? "请求失败",
-            Errors = validationErrors.Count > 0 ? validationErrors : null
-        };
+            return Results.Json(new
+            {
+                success = true,
+                data = (object?)null,
+                message = "操作成功"
+            });
+        }
 
-        return Results.Ok(response);
+        return Results.Json(new
+        {
+            success = false,
+            data = (object?)null,
+            message = result.Errors.FirstOrDefault()?.Message ?? "操作失败",
+            errors = result.Reasons
+                .OfType<ValidationError>()
+                .Select(r => new
+                {
+                    field = r.Metadata.TryGetValue("Field", out var field) ? field?.ToString() : null,
+                    message = r.Message
+                })
+                .ToList()
+        });
+    }
+
+    public static IResult ToApiResult<T>(this Result<T> result)
+    {
+        if (result.IsSuccess)
+        {
+            return Results.Json(new
+            {
+                success = true,
+                data = result.Value,
+                message = "操作成功"
+            });
+        }
+
+        return Results.Json(new
+        {
+            success = false,
+            data = (object?)null,
+            message = result.Errors.FirstOrDefault()?.Message ?? "操作失败",
+            errors = result.Reasons
+                .OfType<ValidationError>()
+                .Select(r => new
+                {
+                    field = r.Metadata.TryGetValue("Field", out var field) ? field?.ToString() : null,
+                    message = r.Message
+                })
+                .ToList()
+        });
     }
 }
