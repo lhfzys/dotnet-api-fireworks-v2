@@ -29,4 +29,8 @@
       <ProjectReference Include="..\Fireworks.Shared\Fireworks.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Common\Endpoints\" />
+    </ItemGroup>
+
 </Project>

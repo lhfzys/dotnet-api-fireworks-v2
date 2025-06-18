@@ -1,4 +1,4 @@
-using Fireworks.Application.interfaces;
+using Fireworks.Application.Common.interfaces;
 using Fireworks.Domain.Identity;
 using Fireworks.Infrastructure.Persistence;
 using Microsoft.AspNetCore.DataProtection;

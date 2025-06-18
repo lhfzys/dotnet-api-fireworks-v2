@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Fireworks.Application.interfaces;
+using Fireworks.Application.Common.interfaces;
 using Fireworks.Domain.Entities;
 using Fireworks.Domain.Identity;
 using Fireworks.Domain.Interfaces;

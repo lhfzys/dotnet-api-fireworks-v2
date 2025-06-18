@@ -22,7 +22,7 @@ public class ExceptionHandlingMiddleware(
 
             var errors = ex.Errors
                 .Select(e => new { field = e.PropertyName, message = e.ErrorMessage })
-                .ToList();
+                .ToArray();
 
             await context.Response.WriteAsJsonAsync(new
             {

@@ -3,7 +3,7 @@ using Fireworks.Api.Common.interfaces;
 using Fireworks.Application.Features.system.Users.CreateUser;
 using MediatR;
 
-namespace Fireworks.Api.Common.Endpoints;
+namespace Fireworks.Api.Endpoints;
 
 public class UserEndpoints : IEndpointRegistrar
 {
