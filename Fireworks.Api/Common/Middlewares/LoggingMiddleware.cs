@@ -6,7 +6,7 @@ namespace Fireworks.Api.Common.Middlewares;
 
 public class LoggingMiddleware(RequestDelegate next)
 {
-    public async Task Invoke(HttpContext context, IAuditService auditService)
+    public async Task Invoke(HttpContext context, IAuditService auditService, ICurrentUserService currentUser)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -15,35 +15,33 @@ public class LoggingMiddleware(RequestDelegate next)
         context.Request.Body.Position = 0;
 
         var originalBodyStream = context.Response.Body;
-        using var memoryStream = new MemoryStream();
+        await using var memoryStream = new MemoryStream();
         context.Response.Body = memoryStream;
 
         await next(context);
 
-        context.Response.Body = originalBodyStream;
-        memoryStream.Position = 0;
-        var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
-        memoryStream.Position = 0;
-        await memoryStream.CopyToAsync(originalBodyStream);
-
         stopwatch.Stop();
 
-        var userId = context.User?.FindFirst("sub")?.Value;
-        var userName = context.User?.Identity?.Name;
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var responseText = await new StreamReader(context.Response.Body).ReadToEndAsync();
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
 
         var log = new AuditLog
         {
-            UserId = Guid.TryParse(userId, out var uid) ? uid : null,
-            UserName = userName,
+            UserId = currentUser.Id,
+            UserName = currentUser.UserName ?? "匿名",
             HttpMethod = context.Request.Method,
             Url = context.Request.Path,
+            UserAgent = context.Request.Headers.UserAgent.ToString(),
             StatusCode = context.Response.StatusCode,
             RequestData = requestBody,
-            ResponseData = responseBody,
-            IpAddress = context.Connection.RemoteIpAddress?.ToString()??"未知IP",
+            ResponseData = responseText,
+            IpAddress = context.Connection.RemoteIpAddress?.ToString() ?? "未知IP",
             ExecutionDurationMs = stopwatch.ElapsedMilliseconds
         };
 
         await auditService.WriteAsync(log);
+
+        await memoryStream.CopyToAsync(originalBodyStream);
     }
 }

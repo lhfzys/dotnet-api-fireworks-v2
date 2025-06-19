@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Fireworks.Application.Common.interfaces;
+using FluentResults;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -30,11 +31,8 @@ public class AuditBehavior<TRequest, TResponse>(
 
             if (isAuditTarget)
             {
-                await auditLogger.LogAsync(
-                    typeof(TRequest).Name,
-                    requestData,
-                    JsonSerializer.Serialize(response),
-                    success: true);
+                var responseData = SafeSerializeResponse(response);
+                await TryLogAsync(typeof(TRequest).Name, requestData, responseData, true);
             }
 
             return response;
@@ -45,14 +43,79 @@ public class AuditBehavior<TRequest, TResponse>(
 
             if (isAuditTarget)
             {
-                await auditLogger.LogAsync(
-                    typeof(TRequest).Name,
-                    requestData,
-                    ex.Message,
-                    success: false);
+                await TryLogAsync(typeof(TRequest).Name, requestData, ex.Message, true);
             }
 
             throw;
+        }
+    }
+
+    private async Task TryLogAsync(string actionName, string requestData, string responseData, bool success)
+    {
+        try
+        {
+            await auditLogger.LogAsync(actionName, requestData, responseData, success);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to write audit log for {Action}", actionName);
+        }
+    }
+
+    private string SafeSerializeResponse(object? response)
+    {
+        if (response == null) return "null";
+        try
+        {
+            var type = response.GetType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Result<>))
+            {
+                var isSuccessProp = type.GetProperty("IsSuccess");
+                var valueProp = type.GetProperty("Value");
+                var reasonsProp = type.GetProperty("Reasons");
+                
+                var isSuccess = (bool?)isSuccessProp?.GetValue(response) ?? false;
+                
+                if (isSuccess)
+                {
+                    var value = valueProp?.GetValue(response);
+                    return JsonSerializer.Serialize(value);
+                }
+                else
+                {
+                    var reasons = reasonsProp?.GetValue(response);
+                    return JsonSerializer.Serialize(new
+                    {
+                        success = false,
+                        errors = reasons
+                    });
+                }
+            }
+
+            if (type == typeof(FluentResults.Result))
+            {
+                var isSuccessProp = type.GetProperty("IsSuccess");
+                var reasonsProp = type.GetProperty("Reasons");
+                bool isSuccess = (bool?)isSuccessProp?.GetValue(response) ?? false;
+                if (isSuccess)
+                {
+                    return "\"Success\"";
+                }
+                else
+                {
+                    var reasons = reasonsProp?.GetValue(response);
+                    return JsonSerializer.Serialize(new
+                    {
+                        success = false,
+                        errors = reasons
+                    });
+                }
+            }
+            return JsonSerializer.Serialize(response);
+        }
+        catch (Exception ex)
+        {
+            return $"<Serialization failed: {ex.Message}>";
         }
     }
 }
