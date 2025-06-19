@@ -10,4 +10,8 @@
       <ProjectReference Include="..\Fireworks.Shared\Fireworks.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="backgroundTasks\" />
+    </ItemGroup>
+
 </Project>

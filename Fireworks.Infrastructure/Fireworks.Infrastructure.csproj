@@ -13,6 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="IPTools.China" Version="1.6.0" />
+      <PackageReference Include="IPTools.Core" Version="1.6.0" />
       <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="9.0.6" />
       <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.1" />
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.6" />
@@ -20,6 +22,7 @@
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
       <PackageReference Include="Scrutor" Version="6.1.0" />
       <PackageReference Include="StackExchange.Redis" Version="2.8.41" />
+      <PackageReference Include="UAParser" Version="3.1.47" />
       <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="9.103.9" />
     </ItemGroup>
 

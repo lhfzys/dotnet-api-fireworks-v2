@@ -1,6 +1,10 @@
 using Fireworks.Application.Common.interfaces;
 using Fireworks.Domain.Identity;
+using Fireworks.Infrastructure.backgroundTasks;
+using Fireworks.Infrastructure.Behaviors;
 using Fireworks.Infrastructure.Persistence;
+using Fireworks.Infrastructure.Services;
+using MediatR;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +15,8 @@ namespace Fireworks.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
         {
@@ -24,7 +29,7 @@ public static class DependencyInjection
                         errorCodesToAdd: null);
                 });
         });
-        
+
         services.AddDataProtection().SetApplicationName("Fireworks");
         services
             .AddIdentityCore<ApplicationUser>(opt =>
@@ -41,6 +46,14 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         services.AddHttpContextAccessor();
+        services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+        services.AddHostedService<QueuedHostedService>();
+        services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IClientIpService, ClientIpService>();
+        services.AddScoped<ILoginLoggingService, LoginLoggingService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
         return services;
     }
 }

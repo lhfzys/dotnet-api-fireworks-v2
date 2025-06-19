@@ -11,9 +11,13 @@ public static class ServiceExtensions
         IConfiguration configuration)
     {
         services
+            .AddRateLimiting()
             .AddSwaggerServices()
             .AddInfrastructureServices(configuration)
-            .AddApplicationLayer();
+            .AddApplicationLayer()
+            .AddHealthChecks()
+            .AddNpgSql(configuration.GetConnectionString("PostgresSqlConnection") ?? string.Empty)
+            .AddRedis(configuration.GetConnectionString("Redis:ConnectionString") ?? string.Empty);
 
         return services;
     }
