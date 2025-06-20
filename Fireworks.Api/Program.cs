@@ -14,7 +14,10 @@ app.UseSecureHeaders();
 app.UseRateLimiting();
 app.UseHttpsRedirection();
 app.UseSwaggerDocumentation();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
+
 var endpointRegistrars = Assembly.GetExecutingAssembly()
     .GetTypes()
     .Where(t => typeof(IEndpointRegistrar).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })

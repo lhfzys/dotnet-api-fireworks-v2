@@ -20,7 +20,7 @@ public class AuditLogService(
         var log = new AuditLog
         {
             UserId = userId ?? currentUser.Id,
-            UserName = userName ?? currentUser.UserName ?? "Unknown",
+            UserName = userName ?? currentUser.UserName ?? "匿名",
             HttpMethod = context?.Request.Method ?? "N/A",
             Url = context?.Request.Path.Value ?? "N/A",
             Action = action,

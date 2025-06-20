@@ -1,3 +1,6 @@
+using System.Net;
+using System.Text.Json;
+using Fireworks.Api.Common.Models;
 using FluentValidation;
 
 namespace Fireworks.Api.Common.Middlewares;
@@ -13,29 +16,11 @@ public class ExceptionHandlingMiddleware(
         {
             await next(context);
         }
-        catch (ValidationException ex)
-        {
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = StatusCodes.Status200OK;
-
-            logger.LogWarning("Validation failed: {Errors}", ex.Errors);
-
-            var errors = ex.Errors
-                .Select(e => new { field = e.PropertyName, message = e.ErrorMessage })
-                .ToArray();
-
-            await context.Response.WriteAsJsonAsync(new
-            {
-                success = false,
-                message = "验证失败",
-                data = (object?)null,
-                errors
-            });
-        }
         catch (Exception ex)
         {
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = StatusCodes.Status200OK;
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            ;
 
             logger.LogError(ex, "Unhandled exception occurred");
 
@@ -43,12 +28,18 @@ public class ExceptionHandlingMiddleware(
                 ? ex.Message
                 : "服务器内部错误，请稍后再试。";
 
-            await context.Response.WriteAsJsonAsync(new
+            var response = new ApiResponse<string>
             {
-                success = false,
-                message,
-                data = (object?)null
-            });
+                Success = false,
+                Data = null,
+                Message = message
+            };
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var json = JsonSerializer.Serialize(response, options);
+            await context.Response.WriteAsJsonAsync(json);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Fireworks.Application.Common.interfaces;
+using Fireworks.Domain.Common.settings;
 using Fireworks.Domain.Identity;
 using Fireworks.Infrastructure.backgroundTasks;
 using Fireworks.Infrastructure.Behaviors;
@@ -54,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<ILoginLoggingService, LoginLoggingService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
+        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+        services.AddScoped<IJwtService, JwtService>();
         return services;
     }
 }
